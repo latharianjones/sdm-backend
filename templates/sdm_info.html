@@ -1,35 +1,191 @@
-{% extends "_layout.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BANGERS — Verify Authenticity</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a0a; color: #fff; font-family: 'Barlow Condensed', sans-serif; min-height: 100vh; }
 
-{% block content %}
-    <h1>Secure Dynamic Messaging Backend Server Demo</h1>
-    <p>
-        <strong style="color: green;">Cryptographic signature validated.</strong>
-    </p>
-    <p>
-        {% if encryption_mode == "LRP" %}
-        <strong style="color: green;">Encryption mode: {{ encryption_mode }}</strong><br>
-        {% else %}
-        Encryption mode: {{ encryption_mode }}<br>
-        {% endif %}
-        {% if picc_data_tag %}
-        PICC Data Tag: <code>{{ picc_data_tag.hex() }}</code><br>
-        {% endif %}
-        NFC TAG UID: <code>{{ uid.hex() }}</code><br>
-        Read counter: <code>{{ read_ctr_num }}</code><br>
-        {% if file_data %}
-        File data (hex): <code>{{ file_data.hex() }}</code><br>
-        File data (UTF-8): <code>{{ file_data_utf8 }}</code><br>
-            {% if tt_status %}
-            Tamper Status: <strong style="color: {{ tt_color }};">{{ tt_status }}</strong><br>
-            (Assuming that "Tamper Status" is stored in the first two bytes of "File data")
-            {% endif %}
-        {% endif %}
-    </p>
-    <p><a href="/api{{ request.full_path }}" class="btn btn-outline-secondary">View as JSON</a></p>
-    {% if demo_mode %}
-    <hr>
-    <p>
-        <a href="/">Back to the main page</a>
-    </p>
-    {% endif %}
-{% endblock %}
+    .header { background: #0a0a0a; border-bottom: 1px solid #1c1c1c; padding: 18px 24px; display: flex; align-items: center; gap: 12px; }
+    .header-accent { width: 4px; height: 28px; background: #ff3d00; border-radius: 2px; flex-shrink: 0; }
+    .header-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; color: #fff; }
+    .header-sub { font-size: 11px; letter-spacing: 2px; color: #444; text-transform: uppercase; margin-top: 2px; }
+
+    .main { max-width: 480px; margin: 0 auto; padding: 40px 20px; }
+
+    /* LOADING */
+    .loading-card { background: #111; border: 1px solid #1c1c1c; border-radius: 4px; padding: 40px 24px; text-align: center; }
+    .loading-text { font-size: 12px; letter-spacing: 3px; color: #444; text-transform: uppercase; }
+
+    /* AUTHENTIC */
+    .result-card { border-radius: 4px; padding: 28px 24px; display: none; }
+    .authentic { background: #0d1a10; border: 1px solid #1a3a20; }
+    .not-found { background: #1a1000; border: 1px solid #3a2000; }
+    .flagged { background: #1a1500; border: 1px solid #3a2e00; }
+
+    .status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .dot-green { background: #2ecc71; box-shadow: 0 0 0 3px rgba(46,204,113,0.15); }
+    .dot-orange { background: #ff3d00; box-shadow: 0 0 0 3px rgba(255,61,0,0.15); }
+    .dot-yellow { background: #f39c12; box-shadow: 0 0 0 3px rgba(243,156,18,0.15); }
+    .status-label { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px; }
+    .green { color: #2ecc71; }
+    .orange { color: #ff3d00; }
+    .yellow { color: #f39c12; }
+
+    .card-name { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; color: #fff; line-height: 1; margin-bottom: 6px; }
+    .series-tag { display: inline-block; background: #ff3d00; color: #fff; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; margin-bottom: 18px; }
+
+    .divider { border: none; border-top: 1px solid #1c1c1c; margin: 16px 0; }
+    .detail-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; }
+    .detail-key { font-size: 11px; letter-spacing: 2px; color: #444; text-transform: uppercase; }
+    .detail-val { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; color: #ddd; font-weight: 600; }
+
+    .tap-counter { background: #0a0a0a; border: 1px solid #1c1c1c; border-radius: 3px; padding: 10px 14px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .tap-key { font-size: 11px; letter-spacing: 2px; color: #333; text-transform: uppercase; }
+    .tap-val { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: #ff3d00; }
+
+    .body-text { color: #999; font-size: 14px; letter-spacing: 1px; margin: 8px 0 0; line-height: 1.5; }
+    .small-text { color: #444; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-top: 12px; }
+
+    .footer { text-align: center; font-size: 11px; letter-spacing: 2px; color: #222; text-transform: uppercase; margin-top: 40px; padding-bottom: 40px; }
+    .footer span { color: #ff3d00; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-accent"></div>
+  <div>
+    <div class="header-title">BANGERS — VERIFY</div>
+    <div class="header-sub">NFC Authenticity Portal &nbsp;·&nbsp; RiporiaCards</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Loading State -->
+  <div class="loading-card" id="loadingCard">
+    <div class="loading-text">Checking Registry...</div>
+  </div>
+
+  <!-- Authentic -->
+  <div class="result-card authentic" id="cardAuthentic">
+    <div class="status-row">
+      <div class="dot dot-green"></div>
+      <span class="status-label green">VERIFIED AUTHENTIC</span>
+    </div>
+    <div class="card-name" id="cardName">—</div>
+    <div class="series-tag" id="seriesTag">BANGERS · 1/1</div>
+    <hr class="divider">
+    <div class="detail-row"><span class="detail-key">Card ID</span><span class="detail-val" id="cardId">—</span></div>
+    <div class="detail-row"><span class="detail-key">Subject</span><span class="detail-val" id="subject">—</span></div>
+    <div class="detail-row"><span class="detail-key">Category</span><span class="detail-val" id="category">—</span></div>
+    <div class="detail-row"><span class="detail-key">Issued</span><span class="detail-val" id="issued">—</span></div>
+    <div class="tap-counter">
+      <span class="tap-key">Total Taps</span>
+      <span class="tap-val" id="tapCount">—</span>
+    </div>
+  </div>
+
+  <!-- Flagged -->
+  <div class="result-card flagged" id="cardFlagged">
+    <div class="status-row">
+      <div class="dot dot-yellow"></div>
+      <span class="status-label yellow">STATUS FLAGGED</span>
+    </div>
+    <p class="body-text">This card exists in the registry but has been flagged. Please contact RiporiaCards for more information.</p>
+  </div>
+
+  <!-- Not Found -->
+  <div class="result-card not-found" id="cardNotFound">
+    <div class="status-row">
+      <div class="dot dot-orange"></div>
+      <span class="status-label orange">NOT IN REGISTRY</span>
+    </div>
+    <p class="body-text">Chip signature is valid but this card ID was not found in the BANGERS registry.</p>
+    <p class="small-text">Contact RiporiaCards if you believe this is an error.</p>
+  </div>
+
+  <div class="footer">RIPORIA CARDS &nbsp;·&nbsp; ALL BANGERS ARE <span>1/1</span> &nbsp;·&nbsp; RIPORIACARDS.COM</div>
+</div>
+
+<script>
+  var SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6KGtUA8B3FkDSPm3rWPQLqs5UnbFckyJFqDCT963z6Gus9n_sWDQUUtHyTMlv3Xh6MNI2kRN72j8A/pub?gid=0&single=true&output=csv';
+  var READ_CTR = {{ read_ctr_num }};
+
+  // file_data_utf8 contains the card ID stored encrypted on the chip
+  // Strip any null padding that comes from the chip
+  var RAW_FILE_DATA = {{ file_data_utf8 | tojson }};
+  var CARD_ID = RAW_FILE_DATA ? RAW_FILE_DATA.replace(/\x00/g, '').trim() : '';
+
+  function parseCSV(text) {
+    var lines = text.trim().split('\n');
+    var headers = lines[0].split(',').map(function(h) { return h.trim().replace(/"/g, ''); });
+    return lines.slice(1).map(function(line) {
+      var vals = line.split(',').map(function(v) { return v.trim().replace(/"/g, ''); });
+      var obj = {};
+      headers.forEach(function(h, i) { obj[h] = vals[i] || ''; });
+      return obj;
+    });
+  }
+
+  function hideAll() {
+    document.getElementById('loadingCard').style.display = 'none';
+    document.getElementById('cardAuthentic').style.display = 'none';
+    document.getElementById('cardFlagged').style.display = 'none';
+    document.getElementById('cardNotFound').style.display = 'none';
+  }
+
+  function show(id) {
+    document.getElementById(id).style.display = 'block';
+  }
+
+  if (!CARD_ID) {
+    hideAll();
+    show('cardNotFound');
+  } else {
+    fetch(SHEET_URL)
+      .then(function(r) { return r.text(); })
+      .then(function(text) {
+        var rows = parseCSV(text);
+        var match = rows.find(function(r) {
+          return r.card_id && r.card_id.toUpperCase() === CARD_ID.toUpperCase();
+        });
+
+        hideAll();
+
+        if (!match) {
+          show('cardNotFound');
+          return;
+        }
+
+        var status = (match.status || '').toLowerCase();
+
+        if (status === 'authentic') {
+          document.getElementById('cardName').textContent = match.card_name || '—';
+          document.getElementById('seriesTag').textContent = (match.series || 'BANGERS') + ' · 1/1';
+          document.getElementById('cardId').textContent = match.card_id || '—';
+          document.getElementById('subject').textContent = match.subject || '—';
+          document.getElementById('category').textContent = match.category || '—';
+          document.getElementById('issued').textContent = match.issued || '—';
+          document.getElementById('tapCount').textContent = READ_CTR;
+          show('cardAuthentic');
+        } else if (status === 'disputed' || status === 'stolen' || status === 'transferred') {
+          show('cardFlagged');
+        } else {
+          show('cardNotFound');
+        }
+      })
+      .catch(function() {
+        hideAll();
+        show('cardNotFound');
+      });
+  }
+</script>
+
+</body>
+</html>
