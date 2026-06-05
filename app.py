@@ -225,7 +225,7 @@ def sdm_webnfc():
     return render_template('sdm_webnfc.html')
 
 
-@app.route('/tagtt')
+@app.route('/bangers')
 def sdm_info_tt():
     return _internal_sdm(with_tt=True)
 
