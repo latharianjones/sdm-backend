@@ -333,7 +333,7 @@ def _internal_sdm(with_tt=False, force_json=False):
                 tt_status = 'Unknown'
                 tt_color = 'orange'
 
-    if request.args.get("output") == "json" or force_json:
+    if force_json:
         return jsonify({
             "uid": uid.hex().upper(),
             "file_data": file_data.hex() if file_data else None,
