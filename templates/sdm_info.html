@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BANGERS — Verify Authenticity</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600&family=Cormorant+Garamond:ital@1&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0a0a0a; color: #fff; font-family: 'Barlow Condensed', sans-serif; min-height: 100vh; }
@@ -34,7 +34,6 @@
     .orange { color: #ff3d00; }
     .yellow { color: #f39c12; }
 
-    /* Card Image */
     .card-image-wrap { margin-bottom: 20px; display: flex; justify-content: center; }
     .card-image { width: 180px; height: auto; border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06); display: block; }
 
@@ -50,11 +49,27 @@
     .tap-key { font-size: 11px; letter-spacing: 2px; color: #333; text-transform: uppercase; }
     .tap-val { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: #ff3d00; }
 
+    /* How This Works Section */
+    .how-it-works { background: #111; border: 1px solid #1c1c1c; border-radius: 4px; padding: 24px; margin-top: 20px; }
+    .how-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 3px; color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .how-title-accent { width: 3px; height: 18px; background: #ff3d00; border-radius: 2px; flex-shrink: 0; }
+    .how-item { display: flex; gap: 14px; margin-bottom: 16px; }
+    .how-item:last-child { margin-bottom: 0; }
+    .how-number { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #ff3d00; line-height: 1; flex-shrink: 0; width: 20px; }
+    .how-text-wrap { padding-top: 1px; }
+    .how-label { font-size: 12px; letter-spacing: 2px; color: #fff; text-transform: uppercase; margin-bottom: 3px; font-weight: 600; }
+    .how-desc { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: #666; line-height: 1.5; }
+    .chip-badge { display: inline-flex; align-items: center; gap: 6px; background: #0a0a0a; border: 1px solid #222; border-radius: 3px; padding: 6px 10px; margin-top: 16px; }
+    .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: #ff3d00; }
+    .chip-label { font-size: 10px; letter-spacing: 2px; color: #444; text-transform: uppercase; }
+
     .body-text { color: #999; font-size: 14px; letter-spacing: 1px; margin: 8px 0 0; line-height: 1.5; }
     .small-text { color: #444; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-top: 12px; }
 
     .footer { text-align: center; font-size: 11px; letter-spacing: 2px; color: #222; text-transform: uppercase; margin-top: 40px; padding-bottom: 40px; }
     .footer span { color: #ff3d00; }
+    .footer a { color: #444; text-decoration: none; transition: color 0.2s; }
+    .footer a:hover { color: #ff3d00; }
   </style>
 </head>
 <body>
@@ -80,7 +95,6 @@
       <span class="status-label green">VERIFIED AUTHENTIC</span>
     </div>
 
-    <!-- Card Image -->
     <div class="card-image-wrap" id="cardImageWrap" style="display:none;">
       <img class="card-image" id="cardImage" src="" alt="BANGERS Card">
     </div>
@@ -117,7 +131,40 @@
     <p class="small-text">Contact RiporiaCards if you believe this is an error.</p>
   </div>
 
-  <div class="footer">RIPORIA CARDS &nbsp;·&nbsp; ALL BANGERS ARE <span>1/1</span> &nbsp;·&nbsp; RIPORIACARDS.COM</div>
+  <!-- How This Works — always visible after result loads -->
+  <div class="how-it-works" id="howItWorks" style="display:none;">
+    <div class="how-title">
+      <div class="how-title-accent"></div>
+      HOW THIS WORKS
+    </div>
+    <div class="how-item">
+      <div class="how-number">1</div>
+      <div class="how-text-wrap">
+        <div class="how-label">Unique Per Tap</div>
+        <div class="how-desc">Every time this card is tapped, the chip generates a brand new encrypted code. The same link never works twice.</div>
+      </div>
+    </div>
+    <div class="how-item">
+      <div class="how-number">2</div>
+      <div class="how-text-wrap">
+        <div class="how-label">Impossible to Clone</div>
+        <div class="how-desc">The encryption key is locked inside the chip at the hardware level. It cannot be copied, duplicated, or transferred to another chip.</div>
+      </div>
+    </div>
+    <div class="how-item">
+      <div class="how-number">3</div>
+      <div class="how-text-wrap">
+        <div class="how-label">Cryptographically Verified</div>
+        <div class="how-desc">Each tap is validated by AES-128 cryptography — the same standard used in banking and government security systems.</div>
+      </div>
+    </div>
+    <div class="chip-badge">
+      <div class="chip-dot"></div>
+      <span class="chip-label">NTAG424 DNA &nbsp;·&nbsp; AES-128 Encrypted &nbsp;·&nbsp; NXP Semiconductors</span>
+    </div>
+  </div>
+
+  <div class="footer">RIPORIA CARDS &nbsp;·&nbsp; ALL BANGERS ARE <span>1/1</span> &nbsp;·&nbsp; <a href="https://www.riporiacards.com" target="_blank">RIPORIACARDS.COM</a></div>
 </div>
 
 <script>
@@ -151,6 +198,7 @@
   if (!CARD_ID) {
     hideAll();
     show('cardNotFound');
+    show('howItWorks');
   } else {
     fetch(SHEET_URL)
       .then(function(r) { return r.text(); })
@@ -164,6 +212,7 @@
 
         if (!match) {
           show('cardNotFound');
+          show('howItWorks');
           return;
         }
 
@@ -178,7 +227,6 @@
           document.getElementById('issued').textContent = match.issued || '—';
           document.getElementById('tapCount').textContent = READ_CTR;
 
-          // Show card image if available
           if (match.image && match.image.trim() !== '') {
             var img = document.getElementById('cardImage');
             var wrap = document.getElementById('cardImageWrap');
@@ -193,10 +241,13 @@
         } else {
           show('cardNotFound');
         }
+
+        show('howItWorks');
       })
       .catch(function() {
         hideAll();
         show('cardNotFound');
+        show('howItWorks');
       });
   }
 </script>
