@@ -207,7 +207,7 @@ def _internal_tagpt(force_json=False):
     if REQUIRE_LRP and res['encryption_mode'] != EncMode.LRP:
         raise BadRequest("Invalid encryption mode, expected LRP.")
 
-    if request.args.get("output") == "json" or force_json:
+    if force_json:
         return jsonify({
             "uid": res['uid'].hex().upper(),
             "read_ctr": res['read_ctr'],
