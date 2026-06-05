@@ -16,11 +16,9 @@
 
     .main { max-width: 480px; margin: 0 auto; padding: 40px 20px; }
 
-    /* LOADING */
     .loading-card { background: #111; border: 1px solid #1c1c1c; border-radius: 4px; padding: 40px 24px; text-align: center; }
     .loading-text { font-size: 12px; letter-spacing: 3px; color: #444; text-transform: uppercase; }
 
-    /* AUTHENTIC */
     .result-card { border-radius: 4px; padding: 28px 24px; display: none; }
     .authentic { background: #0d1a10; border: 1px solid #1a3a20; }
     .not-found { background: #1a1000; border: 1px solid #3a2000; }
@@ -35,6 +33,10 @@
     .green { color: #2ecc71; }
     .orange { color: #ff3d00; }
     .yellow { color: #f39c12; }
+
+    /* Card Image */
+    .card-image-wrap { margin-bottom: 20px; display: flex; justify-content: center; }
+    .card-image { width: 180px; height: auto; border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06); display: block; }
 
     .card-name { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; color: #fff; line-height: 1; margin-bottom: 6px; }
     .series-tag { display: inline-block; background: #ff3d00; color: #fff; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; margin-bottom: 18px; }
@@ -67,7 +69,6 @@
 
 <div class="main">
 
-  <!-- Loading State -->
   <div class="loading-card" id="loadingCard">
     <div class="loading-text">Checking Registry...</div>
   </div>
@@ -78,6 +79,12 @@
       <div class="dot dot-green"></div>
       <span class="status-label green">VERIFIED AUTHENTIC</span>
     </div>
+
+    <!-- Card Image -->
+    <div class="card-image-wrap" id="cardImageWrap" style="display:none;">
+      <img class="card-image" id="cardImage" src="" alt="BANGERS Card">
+    </div>
+
     <div class="card-name" id="cardName">—</div>
     <div class="series-tag" id="seriesTag">BANGERS · 1/1</div>
     <hr class="divider">
@@ -116,9 +123,6 @@
 <script>
   var SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6KGtUA8B3FkDSPm3rWPQLqs5UnbFckyJFqDCT963z6Gus9n_sWDQUUtHyTMlv3Xh6MNI2kRN72j8A/pub?gid=0&single=true&output=csv';
   var READ_CTR = {{ read_ctr_num }};
-
-  // file_data_utf8 contains the card ID stored encrypted on the chip
-  // Strip any null padding that comes from the chip
   var RAW_FILE_DATA = {{ file_data_utf8 | tojson }};
   var CARD_ID = RAW_FILE_DATA ? RAW_FILE_DATA.replace(/\x00/g, '').trim().substring(2) : '';
 
@@ -173,6 +177,16 @@
           document.getElementById('category').textContent = match.category || '—';
           document.getElementById('issued').textContent = match.issued || '—';
           document.getElementById('tapCount').textContent = READ_CTR;
+
+          // Show card image if available
+          if (match.image && match.image.trim() !== '') {
+            var img = document.getElementById('cardImage');
+            var wrap = document.getElementById('cardImageWrap');
+            img.src = match.image.trim();
+            img.onload = function() { wrap.style.display = 'flex'; };
+            img.onerror = function() { wrap.style.display = 'none'; };
+          }
+
           show('cardAuthentic');
         } else if (status === 'disputed' || status === 'stolen' || status === 'transferred') {
           show('cardFlagged');
