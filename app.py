@@ -3,6 +3,9 @@
 import argparse
 import binascii
 import io
+import os
+
+import requests as http_req
 
 from flask import Flask, jsonify, render_template, request
 from werkzeug.exceptions import BadRequest
@@ -35,6 +38,43 @@ from libsdm.sdm import (
 
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+
+# ---------------------------------------------------------------
+# Upstash Redis - replay protection (counter tracking)
+# ---------------------------------------------------------------
+UPSTASH_URL = os.environ.get('UPSTASH_URL', '')
+UPSTASH_TOKEN = os.environ.get('UPSTASH_TOKEN', '')
+
+
+def get_last_counter(uid_hex):
+    """Get the last seen counter for a chip UID from Upstash Redis."""
+    if not UPSTASH_URL or not UPSTASH_TOKEN:
+        return 0
+    try:
+        r = http_req.get(
+            f"{UPSTASH_URL}/get/ctr_{uid_hex}",
+            headers={"Authorization": f"Bearer {UPSTASH_TOKEN}"},
+            timeout=3
+        )
+        data = r.json()
+        return int(data['result']) if data.get('result') else 0
+    except Exception:
+        return 0
+
+
+def set_last_counter(uid_hex, counter):
+    """Store the last seen counter for a chip UID in Upstash Redis."""
+    if not UPSTASH_URL or not UPSTASH_TOKEN:
+        return
+    try:
+        http_req.post(
+            f"{UPSTASH_URL}/set/ctr_{uid_hex}/{counter}",
+            headers={"Authorization": f"Bearer {UPSTASH_TOKEN}"},
+            timeout=3
+        )
+    except Exception:
+        pass
+# ---------------------------------------------------------------
 
 
 @app.errorhandler(400)
@@ -236,6 +276,19 @@ def _internal_sdm(with_tt=False, force_json=False):
     read_ctr_num = res['read_ctr']
     file_data = res['file_data']
     encryption_mode = res['encryption_mode'].name
+
+    # ---------------------------------------------------------------
+    # Replay protection — block shared/reused URLs
+    # ---------------------------------------------------------------
+    if not force_json:
+        uid_hex = uid.hex().upper()
+        last_ctr = get_last_counter(uid_hex)
+
+        if read_ctr_num <= last_ctr:
+            return render_template('expired.html')
+
+        set_last_counter(uid_hex, read_ctr_num)
+    # ---------------------------------------------------------------
 
     file_data_utf8 = ""
     tt_status_api = ""
