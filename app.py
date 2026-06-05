@@ -230,7 +230,7 @@ def sdm_info_tt():
     return _internal_sdm(with_tt=True)
 
 
-@app.route('/api/tagtt')
+@app.route('/bangers')
 def sdm_api_info_tt():
     try:
         return _internal_sdm(with_tt=True, force_json=True)
