@@ -120,7 +120,7 @@
   // file_data_utf8 contains the card ID stored encrypted on the chip
   // Strip any null padding that comes from the chip
   var RAW_FILE_DATA = {{ file_data_utf8 | tojson }};
-  var CARD_ID = RAW_FILE_DATA ? RAW_FILE_DATA.replace(/\x00/g, '').trim() : '';
+  var CARD_ID = RAW_FILE_DATA ? RAW_FILE_DATA.replace(/\x00/g, '').trim().substring(2) : '';
 
   function parseCSV(text) {
     var lines = text.trim().split('\n');
